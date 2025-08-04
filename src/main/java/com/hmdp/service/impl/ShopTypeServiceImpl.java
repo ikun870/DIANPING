@@ -40,7 +40,7 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
         // 从Redis查询缓存
         List<String> shopTypeJsonList = stringRedisTemplate.opsForList().range(key, 0, -1);
         if (shopTypeJsonList != null && !shopTypeJsonList.isEmpty()) {
-              log.info("缓存命中————————————————————————————————————————————————————————————————————————————");
+             // log.info("缓存命中————————————————————————————————————————————————————————————————————————————");
             // 缓存命中
             try {
                 // 将JSON字符串列表转换为ShopType对象列表

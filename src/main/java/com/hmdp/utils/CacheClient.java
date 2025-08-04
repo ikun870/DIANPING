@@ -65,7 +65,7 @@ public class CacheClient {
            this.set(key,t,ttl,timeUnit);
             return t;
         }
-
+        //需要提前对热点key预热
         public <T,ID> T queryWithLogicalExpire(String prefix, ID id, Class<T> type,Function<ID,T> dbFallback,Long ttl,TimeUnit timeUnit){
             // 缓存数据
             String key = prefix + id;
@@ -77,7 +77,7 @@ public class CacheClient {
             T t = JSONUtil.toBean(data, type);//如果data为null，会返回null，不会报错
             //判断是否过期
             LocalDateTime expireTime = redisData.getExpireTime();
-            if(expireTime.isAfter(LocalDateTime.now())){
+            if (expireTime != null && expireTime.isAfter(LocalDateTime.now())){
                 //未过期，直接返回店铺数据
                 return t;
             }
