@@ -43,17 +43,14 @@ import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.connection.stream.StreamReadOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFuture;
 
-/**
- * <p>
- *  服务实现类
- * </p>
- *
- * @author 虎哥
- * @since 2021-12-22
- */
+import org.springframework.util.concurrent.ListenableFutureCallback;
+ 
 @Service
 @Slf4j
 public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
@@ -199,7 +196,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
        return Result.ok(orderId);
     }
     */
-     private IVoucherOrderService proxy; 
+     private IVoucherOrderService proxy;
+
+    /* 
     @Override
     public Result seckillVoucher(Long voucherId) {
         // 1.执行lua脚本
@@ -330,7 +329,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             }
         }
     }
-    private void handleVoucherOrder(VoucherOrder voucherOrder) {
+
+    */
+    public void handleVoucherOrder(VoucherOrder voucherOrder) {
         //创建锁对象
         //SimpleRedisLock lock = new SimpleRedisLock("order:" + userId,stringRedisTemplate);
         //创建Redisson锁对象
@@ -412,7 +413,71 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         
     }
 
+    /*
+     * 使用kafka消息队列
 
+     */
+        //使用静态代码块提前加载脚本，提高响应速度
+    private static final DefaultRedisScript<Long> SECKILL_KAFKA_SCRIPT;
+    static {
+        SECKILL_KAFKA_SCRIPT = new DefaultRedisScript<>();
+        SECKILL_KAFKA_SCRIPT.setLocation(new ClassPathResource("seckill_kafka.lua"));
+        SECKILL_KAFKA_SCRIPT.setResultType(Long.class);
+    }
 
-    
+    @Resource
+    private KafkaTemplate<String, VoucherOrder> kafkaTemplate;
+
+    @Override
+    public Result seckillVoucher(Long voucherId) {
+        // 获取用户
+        Long userId = UserHolder.getUser().getId();
+        // 1.执行lua脚本
+        Long orderId = redisIdWorker.nextId("order");
+        // 2.判断用户是否具有下单资格，操作redis
+
+        Long result = stringRedisTemplate.execute(
+                SECKILL_KAFKA_SCRIPT,
+                Collections.emptyList(),
+                userId.toString(), voucherId.toString(), orderId.toString()
+        );
+        int r = result.intValue();
+        if (r != 0) {
+            // 3.不为0，代表没有购买资格
+            return Result.fail(r == 1 ? "不能重复下单" : "库存不足");
+        }
+        // 4.为0，有购买资格，把下单信息保存到kafka
+        VoucherOrder voucherOrder = new VoucherOrder();
+        voucherOrder.setId(orderId);
+        voucherOrder.setUserId(userId);
+        voucherOrder.setVoucherId(voucherId);
+
+        proxy = (IVoucherOrderService) AopContext.currentProxy();  
+        if(proxy == null){
+            return Result.fail("代理为空，~订单创建失败");
+        }
+
+        // 5.发送到kafka
+        ListenableFuture<SendResult<String,VoucherOrder>> send = kafkaTemplate.send("seckill_topic", voucherOrder);
+        //执行回调函数
+        send.addCallback(new ListenableFutureCallback<SendResult<String, VoucherOrder>>() {
+            @Override
+            public void onFailure(Throwable ex) {
+                // 发送失败
+                log.error("kafka发送消息失败",ex);
+
+            }
+
+            @Override
+            public void onSuccess(SendResult<String, VoucherOrder> result) {
+                // 发送成功
+                log.info("kafka发送消息成功,消息内容:{}",result);
+
+            }
+        });
+
+        // 6.返回订单id
+        return Result.ok(orderId);
+    }
+
 }

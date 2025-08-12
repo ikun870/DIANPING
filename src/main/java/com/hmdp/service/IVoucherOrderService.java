@@ -20,5 +20,6 @@ public interface IVoucherOrderService extends IService<VoucherOrder> {
 
     void createVoucherOrder(VoucherOrder voucherOrder);
 
+    void handleVoucherOrder(VoucherOrder voucherOrder);
 
 }

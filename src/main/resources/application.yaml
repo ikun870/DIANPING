@@ -20,6 +20,31 @@ spring:
         time-between-eviction-runs: 10s
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
+
+  kafka:
+    bootstrap-servers: 127.0.0.1:9092
+    consumer:
+      group-id: seckill-group
+
+      auto-offset-reset: latest #当消费者首次启动或找不到偏移量时，决定从哪里开始消费。 earliest 从分区最早的消息开始  latest 只消费启动后的消息
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      enable-auto-commit: false
+     
+      properties:
+        spring.json.trusted.packages: "*" # 允许反序列化所有包                       
+
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    
+    listener:
+      ack-mode: manual_immediate
+
+
+
+
 mybatis-plus:
   type-aliases-package: com.hmdp.entity # 别名扫描包
 logging:
