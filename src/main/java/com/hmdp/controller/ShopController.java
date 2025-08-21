@@ -3,13 +3,15 @@ package com.hmdp.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.hmdp.common.annotation.RateLimiter;
+import com.hmdp.common.enums.LimitType;
 import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
 import com.hmdp.service.IShopService;
 import com.hmdp.utils.SystemConstants;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * <p>
@@ -32,6 +34,7 @@ public class ShopController {
      * @return 商铺详情数据
      */
     @GetMapping("/{id}")
+    @RateLimiter(keyPrefix  = "shop:id", windowSize = 5, maxCount = 10,limitType=LimitType.USER)
     public Result queryShopById(@PathVariable("id") Long id) {
         return shopService.queryShopById(id);
     }

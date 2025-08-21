@@ -24,11 +24,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Resource;
 
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -457,8 +458,11 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             return Result.fail("代理为空，~订单创建失败");
         }
 
-        // 5.发送到kafka
-        ListenableFuture<SendResult<String,VoucherOrder>> send = kafkaTemplate.send("seckill_topic", voucherOrder);
+        /*
+         * - 类型不匹配问题 ：将 ListenableFuture<SendResult<String,VoucherOrder>> 替换为 CompletableFuture<SendResult<String,VoucherOrder>> ，
+         * 这是因为新版Spring Kafka中 kafkaTemplate.send() 方法返回的是 CompletableFuture 而非 ListenableFuture 。
+    - 2.方法过时问题 ：使用 CompletableFuture 的 thenAccept() 和 exceptionally() 方法替代了已弃用的 addCallback() 方法。
+            ListenableFuture<SendResult<String,VoucherOrder>> send = kafkaTemplate.send("seckill_topic", voucherOrder);
         //执行回调函数
         send.addCallback(new ListenableFutureCallback<SendResult<String, VoucherOrder>>() {
             @Override
@@ -475,9 +479,36 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
             }
         });
+         */
+        // 5.发送到kafka
+        CompletableFuture<SendResult<String,VoucherOrder>> send = kafkaTemplate.send("seckill_topic", voucherOrder);
+        // 处理发送结果
+        send.thenAccept(sendResult -> {
+            // 发送成功
+            log.info("kafka发送消息成功,主题:seckill_topic,订单ID:{},分区:{},偏移量:{}",
+                voucherOrder.getId(), sendResult.getRecordMetadata().partition(), sendResult.getRecordMetadata().offset());
+        }).exceptionally(ex -> {
+            // 发送失败
+            log.error("kafka发送消息失败,主题:seckill_topic,订单ID:{}", voucherOrder.getId(), ex);
+            // 调用失败处理方法
+            handleKafkaSendFailure(voucherOrder);
+            return null;
+        });
+
 
         // 6.返回订单id
         return Result.ok(orderId);
     }
+
+        /**
+     * 处理Kafka消息发送失败的情况
+     */
+    private void handleKafkaSendFailure(VoucherOrder voucherOrder) {
+        // 这里可以实现重试逻辑或持久化到失败表等补偿机制
+        log.warn("准备处理发送失败的订单:{}，可实现重试或人工干预逻辑", voucherOrder.getId());
+        // 示例：可以将失败订单存入数据库，以便后续处理
+        // failureOrderService.save(new FailureOrder(voucherOrder));
+    }
+
 
 }

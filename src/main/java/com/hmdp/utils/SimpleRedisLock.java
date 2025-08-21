@@ -3,13 +3,9 @@ package com.hmdp.utils;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Resource;
-
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
-
-import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
 
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.BooleanUtil;

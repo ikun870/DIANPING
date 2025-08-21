@@ -4,20 +4,22 @@ spring:
   application:
     name: hmdp
   datasource:
-    driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/dianping?useSSL=false&serverTimezone=UTC
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/dianping?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
     username: root
     password: 123456
-  redis:
-    host: 127.0.0.1
-    port: 6379
-    password: 123456
-    lettuce:
-      pool:
-        max-active: 10
-        max-idle: 10
-        min-idle: 1
-        time-between-eviction-runs: 10s
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      #password: 123456
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 10
+          min-idle: 1
+          time-between-eviction-runs: 10s
+  
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
 
@@ -50,3 +52,51 @@ mybatis-plus:
 logging:
   level:
     com.hmdp: debug
+    dev.langchain4j: debug
+
+
+
+
+# OpenAI配置
+openai:
+  api-key: "sk-6b9e8a0321fa48dc996fe7583944a9f3"
+  base-url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  model-name: "qwen-plus"
+  timeout: 15s
+  log-requests: true
+  log-responses: true
+  system-prompt: 你是外卖平台的小助手团团，回答要简洁，不需要与用户多余的寒暄。
+  # 阿里通义兼容模式可用的embedding模型名称(若 text-embedding-3-small 不支持，可换为 text-embedding-v1 或通义提供的名称)
+  embedding-model-name: "text-embedding-v3"
+  maxSegmentPerBatch: 10
+  # RAG 总开关
+  rag:
+    enabled: true
+
+# langchain4j:
+#   open-ai:
+#     chat-model:
+#       api-key: "sk-6b9e8a0321fa48dc996fe7583944a9f3"
+#       base-url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+#       model-name: "qwen-plus"
+#       timeout: 15s
+#       log-requests: true
+#       log-responses: true
+
+# langchain4j:
+#   open-ai:
+#     streaming-chat-model:
+#       api-key: "sk-6b9e8a0321fa48dc996fe7583944a9f3"
+#       base-url: "https://dashscope.aliyuncs.com/compatible-mode/v1" 
+#       model-name: "qwen-plus"
+#       timeout: 15s
+#       log-requests: true
+#       log-responses: true
+
+langchain4j:
+  community:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password:
+#通过langchain4j-community-redis-spring-boot-starter，检测到这段配置后，会自动配置Redis EmbeddingStore放到Spring容器中

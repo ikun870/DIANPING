@@ -16,7 +16,9 @@ public class RedissonConfig {
         // 使用单节点配置
         SingleServerConfig serverConfig = config.useSingleServer();
         // 设置节点地址
-        serverConfig.setAddress("redis://127.0.0.1:6379").setPassword("123456");
+        serverConfig.setAddress("redis://127.0.0.1:6379")
+        //.setPassword("")
+        ;
         // 创建Redisson客户端
         RedissonClient redissonClient = Redisson.create(config);
         return redissonClient;

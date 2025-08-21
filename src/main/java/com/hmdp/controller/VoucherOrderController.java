@@ -1,10 +1,12 @@
 package com.hmdp.controller;
 
 
+import com.hmdp.common.annotation.RateLimiter;
+import com.hmdp.common.enums.LimitType;
 import com.hmdp.dto.Result;
 import com.hmdp.service.IVoucherOrderService;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +27,7 @@ public class VoucherOrderController {
     @Resource
     private IVoucherOrderService voucherOrderService;
     @PostMapping("seckill/{id}")
+    @RateLimiter(keyPrefix  = "voucher:id", windowSize = 10, maxCount = 100, message = "秒杀人数太多，请稍后再试", limitType=LimitType.GLOBAL)
     public Result seckillVoucher(@PathVariable("id") Long voucherId) {
         return voucherOrderService.seckillVoucher(voucherId);
     }

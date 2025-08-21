@@ -5,6 +5,8 @@ public class RedisConstants {
     public static final Long LOGIN_CODE_TTL = 2L;
     public static final String LOGIN_USER_KEY = "login:token:";
     public static final Long LOGIN_USER_TTL = 3000000L;
+    public static final String CHAT_MEMORY_KEY= "chat:mem:";
+    public static final Long CHAT_MEMORY_TTL = 1200L; // 20 分钟
 
 
     public static final Long CACHE_NULL_TTL = 2L;

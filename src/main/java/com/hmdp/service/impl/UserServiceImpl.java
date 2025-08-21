@@ -13,6 +13,7 @@ import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,8 +31,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpSession;
+import jakarta.annotation.Resource;
 
 /**
  * <p>

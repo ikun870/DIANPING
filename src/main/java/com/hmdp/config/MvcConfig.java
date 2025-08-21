@@ -1,6 +1,6 @@
 package com.hmdp.config;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -24,7 +24,7 @@ public class MvcConfig implements WebMvcConfigurer {
         
         // 2. 拦截需要登录路径的拦截器
         registry.addInterceptor(new SecondInterceptor())
-            .excludePathPatterns("/user/code","/user/login","blog/hot","/shop/**", "/voucher/**", "/shop-type/**", "/upload/**")
+            .excludePathPatterns("/user/code","/user/login","blog/hot","/shop/**", "/voucher/**", "/shop-type/**", "/upload/**","/chat/**","/index.html")
             .order(2);
     }
 }
